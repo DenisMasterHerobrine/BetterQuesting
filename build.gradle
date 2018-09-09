@@ -12,6 +12,7 @@ buildscript {
 }
 
 apply plugin: "net.minecraftforge.gradle.forge"
+apply plugin: 'maven'
 
 version = modVersion
 group= modGroup
@@ -35,9 +36,20 @@ minecraft {
 
 repositories {
     mavenCentral()
+    maven {
+        name = "CB Repo."
+        url = "http://chickenbones.net/maven/"
+    }
+    maven {
+        name = "JEI Maven."
+        url = "http://dvs1.progwml6.com/files/maven"
+    }
 }
 
 dependencies {
+    compile "codechicken:CodeChickenLib:1.12.2-3.2.2.353:deobf"
+    compile "mezz.jei:jei_1.12.2:4.12.0.215"
+    compile "codechicken:NotEnoughItems:1.12.2-2.4.1.239:deobf"
 }
 
 processResources {
