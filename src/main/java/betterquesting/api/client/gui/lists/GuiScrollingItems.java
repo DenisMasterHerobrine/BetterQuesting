@@ -1,5 +1,9 @@
 package betterquesting.api.client.gui.lists;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.input.Mouse;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.util.ITooltipFlag;
@@ -11,10 +15,14 @@ import net.minecraftforge.oredict.OreDictionary;
 import betterquesting.api.client.gui.GuiElement;
 import betterquesting.api.utils.BigItemStack;
 import betterquesting.api.utils.RenderUtils;
+import net.minecraftforge.fml.common.Loader;
+import codechicken.nei.jei.proxy.JEIProxy;
 
 public class GuiScrollingItems extends GuiScrollingBase<GuiScrollingItems.ScrollingEntryItem>
 {
 	private final Minecraft mc;
+	private int mx;
+	private int my;
 	
 	public GuiScrollingItems(Minecraft mc, int x, int y, int w, int h)
 	{
@@ -32,12 +40,27 @@ public class GuiScrollingItems extends GuiScrollingBase<GuiScrollingItems.Scroll
 	{
 		this.getEntryList().add(new ScrollingEntryItem(mc, stack, description));
 	}
+
+    @Override
+    public void onKeyTyped(char c, int keyCode)
+    {
+        for(int i = getEntryList().size() - 1; i >= 0; i--)
+        {
+            ScrollingEntryItem e = getEntryList().get(i);
+            e.onKeyTyped(c, keyCode);
+        }
+
+    }
 	
 	public static class ScrollingEntryItem extends GuiElement implements IScrollingEntry
 	{
 		private final Minecraft mc;
 		private BigItemStack stack;
 		private String desc = "";
+        private int mx3;
+        private int my3;
+        private int px3;
+        private int py3;
 		
 		private NonNullList<ItemStack> subStacks = NonNullList.<ItemStack>create();
 		
@@ -142,6 +165,10 @@ public class GuiScrollingItems extends GuiScrollingBase<GuiScrollingItems.Scroll
 		@Override
 		public void drawForeground(int mx, int my, int px, int py, int width)
 		{
+            this.mx3 = mx;
+            this.my3 = my;
+            this.px3 = px;
+            this.py3 = py;
 			if(stack != null && isWithin(mx, my, px + 2, py + 2, 32, 32))
 			{
 				ItemStack tmpStack = subStacks.get((int)(Minecraft.getSystemTime()/1000)%subStacks.size()).copy();
@@ -155,9 +182,24 @@ public class GuiScrollingItems extends GuiScrollingBase<GuiScrollingItems.Scroll
 		}
 		
 		@Override
+        @SuppressWarnings("unchecked")
 		public void onMouseClick(int mx, int my, int px, int py, int click, int index)
 		{
-			// JEI/NEI support here
+            // JEI + NEI Support for BetterQuesting 3.5
+            if(stack != null && isWithin(mx3, my3, px3 + 2, py3 + 2, 32, 32))
+            {
+                try
+                {
+					if(click == 1)
+					{
+                       codechicken.nei.jei.JEIIntegrationManager.openUsageGui(stack.getBaseStack());
+					}
+					else
+					{
+						codechicken.nei.jei.JEIIntegrationManager.openRecipeGui(stack.getBaseStack());
+					}
+                } catch(Exception e){}
+            }
 		}
 
 		@Override
@@ -171,5 +213,23 @@ public class GuiScrollingItems extends GuiScrollingBase<GuiScrollingItems.Scroll
 		{
 			return isForeground;
 		}
+        public void onKeyTyped(char c, int keyCode)
+        {
+            //NEI integration for 'R' and 'U' keys
+            if(stack != null && (c == 'r' || c == 'u') && isWithin(this.mx3, this.my3, this.px3 + 2, this.py3 + 2, 32, 32))
+            {
+                    try
+                    {
+                        if(c == 'r')
+                        {
+                            codechicken.nei.jei.JEIIntegrationManager.openRecipeGui(stack.getBaseStack());
+                        }
+                        else if(c == 'u')
+                        {
+                            codechicken.nei.jei.JEIIntegrationManager.openUsageGui(stack.getBaseStack());
+                        }
+                    } catch(Exception e){}
+            }
+        }
 	}
 }
